@@ -1,13 +1,30 @@
 import pandas as pd
 
-data = pd.read_csv("Resources/wdbc.csv", sep=',', header=None).transpose().values
+fileName = 'Resources/wdbc.data'
 
-kNN = [1, 5, 10]
-metricType = ['mangattan', 'euclidean', 'minkowski']
+def main():
+    file = open(fileName, 'r')
+    lines = file.readlines() 
+  
 
-values = []
+    # Array with data
+    data = []
+
+    # Reading data from file
+    for line in lines: 
+        data.append(line.strip().split(','))
 
 
-# data[2][1] --> 3cia kolumna 2gi wiersz
-print(data[2][1])
+    # data = pd.read_csv(fileName, sep=',', header = None).transpose().values
 
+    kNN = [1, 5, 10]
+    metricType = ['mangattan', 'euclidean', 'minkowski']
+
+    values = []
+
+
+    # data[2][1] --> 3cia kolumna 2gi wiersz
+    # print(data)
+
+
+main()
