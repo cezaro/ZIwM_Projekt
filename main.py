@@ -29,10 +29,8 @@ metricTypes = ['euclidean', 'manhattan']    # Distance metrics
 
 
 def main():
-    instances = loadDataFromFile(dataFile, skipRowsWithInvalidFeature, defaultValueOfInvalidFeature)
-
-    print(instances[0].getFeatureValues())
-    # ranking = kolmogorovTest(instances, quantityOfFeatures)
+    instances = loadDataFromFile(dataFile, skipRowsWithInvalidFeature = False, defaultValueOfInvalidFeature = 1)
+    ranking = kolmogorovTest(instances, quantityOfFeatures)
     # featuresIds = [x.getParamID() for x in ranking]
 
     # teachingData, testData = divideInstances(instances)
@@ -40,7 +38,7 @@ def main():
     # for feature in range(0, ranking.__len__()):
         # print(ranking[feature].getParamID() + 1, '\t', ranking[feature].getPValue(), '\t', ranking[feature].getStatistic())
 
-    # crossValidation(kNN, metricTypes, instances, ranking)
+    crossValidation(kNN, metricTypes, instances, ranking)
 
     # score = kNNAlgorithm(1, teachingData, testData, featuresIds, 'euclidean')
     # print(score)
@@ -141,11 +139,11 @@ def crossValidation(kValues, metrics, instances, features):
 
             for i in range(0, features.__len__()):
                 featuresIds = [feature.getParamID() for feature in features[0:i + 1]]
-                data, featuresData = prepareData(instances, featuresIds)
+                data, dataLabels = prepareData(instances, featuresIds)
 
-                knn = KNeighborsClassifier(n_neighbors = k, metric = m)
+                knnClassifier = KNeighborsClassifier(n_neighbors = k, metric = m)
                 rkf = RepeatedKFold(n_splits = 2, n_repeats = 5)
-                score = cross_val_score(estimator = knn, X = data , y = featuresData , scoring = 'accuracy', cv = rkf)
+                score = cross_val_score(estimator = knnClassifier, X = data, y = dataLabels, scoring = 'accuracy', cv = rkf)
                 scores[m][k].append(mean(score))
 
     return scores
