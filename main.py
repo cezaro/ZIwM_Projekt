@@ -3,15 +3,16 @@ from ksType import ksType
 from instance import Instance
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import cross_val_score, RepeatedKFold
 import random
-
+from numpy import mean
 
 def main():
     fileName = 'Resources/breast-cancer-wisconsin.data'
     # fileName = 'Resources/wdbc.data'
 
     # kNN = [1, 5, 10]
-    # metricType = ['manhattan', 'euclidean', 'minkowski']
+    # metricType = ['manhattan', 'euclidean']
 
     quantityOfFeatures = 9
     instances = loadDataFromFile(fileName)
@@ -19,15 +20,12 @@ def main():
     featuresIds = [x.getParamID() for x in ranking]
 
     # for feature in range(0, ranking.__len__()):
-    #     print(ranking[feature].getParamID() + 1, '\t', ranking[feature].getPValue(), '\t', ranking[feature].getStatistic())
+        # print(ranking[feature].getParamID() + 1, '\t', ranking[feature].getPValue(), '\t', ranking[feature].getStatistic())
 
-    # 2-krotna walidacja krzyżowa
-    teachingData, testData = crossValidation(instances)
-    # print(instances.__len__(), teachingData.__len__(), testData.__len__())
+    crossValidation(1, 5, 'euclidean', instances, ranking)
 
-
-    score = kNNAlgorithm(1, teachingData, testData, featuresIds, 'euclidean')
-    print(score)
+    # score = kNNAlgorithm(1, teachingData, testData, featuresIds, 'euclidean')
+    # print(score)
 
 
 def loadDataFromFile(fileName):
@@ -62,24 +60,24 @@ def kolmogorovTest(instances, quantityOfFeatures):
 
     return sorted(featuresRanking, key=ksType.getStatistic, reverse=True)
 
-def crossValidation(instances):
-    teachingData = []
-    testData = []
-    instancesNumber = int(instances.__len__() / 2)
-    usedIndexes = []
+# def crossValidation(instances):
+#     teachingData = []
+#     testData = []
+#     instancesNumber = int(instances.__len__() / 2)
+#     usedIndexes = []
 
-    while teachingData.__len__() < instancesNumber:
-        randomIndex = random.randint(0, instances.__len__() - 1)
+#     while teachingData.__len__() < instancesNumber:
+#         randomIndex = random.randint(0, instances.__len__() - 1)
 
-        if randomIndex not in usedIndexes:
-            teachingData.append(instances[randomIndex])
-            usedIndexes.append(randomIndex)
+#         if randomIndex not in usedIndexes:
+#             teachingData.append(instances[randomIndex])
+#             usedIndexes.append(randomIndex)
 
-    for i in range(instances.__len__()):
-        if i not in usedIndexes:
-            testData.append(instances[i])
+#     for i in range(instances.__len__()):
+#         if i not in usedIndexes:
+#             testData.append(instances[i])
 
-    return teachingData, testData
+#     return teachingData, testData
 
 def kNNAlgorithm(k, teachingData, testData, features, metric):
     teachingDataSet, teachingDataLabels = prepareData(teachingData, features)
@@ -108,6 +106,20 @@ def prepareData(data, features):
         finalData.append(featureSet)
 
     return finalData, finalDataLabels
+
+def crossValidation(k, n, metric, instances, features):
+    scores = []
+
+    for i in range(0, features.__len__()):
+        featuresIds = [feature.getParamID() for feature in features[0:i + 1]]
+        data, featuresData = prepareData(instances, featuresIds)
+
+        knn = KNeighborsClassifier(n_neighbors = k, metric = metric)
+        rkf = RepeatedKFold(n_splits = 2, n_repeats = n)
+        score = cross_val_score(estimator = knn, X = data , y = featuresData , scoring = 'accuracy', cv = rkf)
+        scores.append(mean(score))
+
+    return scores
 
 
 main()
