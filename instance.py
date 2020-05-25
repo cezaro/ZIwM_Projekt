@@ -4,7 +4,7 @@ class Instance:
     cancerType: int
     cancerClass: str
 
-    def __init__(self, id, featureValues, cancerType):
+    def __init__(self, id, featureValues, cancerType, defaultValueOfInvalidFeature):
         self.id = id
         self.featureValues = featureValues
         self.cancerType = cancerType
@@ -13,6 +13,14 @@ class Instance:
             self.cancerClass = 'B'
         else:
             self.cancerClass = 'M'
+
+        try:
+            index = self.featureValues.index('?')
+            self.featureValues[index] = defaultValueOfInvalidFeature
+        except ValueError as ve:
+            pass
+
+        
 
     def getId(self):
         return self.id

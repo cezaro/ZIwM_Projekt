@@ -4,39 +4,60 @@ from instance import Instance
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_score, RepeatedKFold
-import random
 from numpy import mean
+import random
+
+
+# Configuration
+dataFile = 'Resources/breast-cancer-wisconsin.data'
+
+skipRowsWithInvalidFeature = True # Skip rows with '?' in features
+defaultValueOfInvalidFeature = 1 # Replace '?' with value if skipRowsWithInvalidFeature is False
+
+# Data settings
+columnId = 0 # Index of column with id
+columnCancerClass = 10 # Index of column with cancer class
+columnFirstFeature = 1 # Index of column with first feature
+
+quantityOfFeatures = 9
+
+# Algorithms settings
+kNN = [1, 5, 10]
+metricTypes = ['euclidean', 'manhattan']
+
 
 def main():
-    fileName = 'Resources/breast-cancer-wisconsin.data'
-    # fileName = 'Resources/wdbc.data'
+    instances = loadDataFromFile(dataFile, defaultValueOfInvalidFeature)
 
-    kNN = [1, 5, 10]
-    metricTypes = ['euclidean', 'manhattan']
+    print(instances[0].getFeatureValues())
+    # ranking = kolmogorovTest(instances, quantityOfFeatures)
+    # featuresIds = [x.getParamID() for x in ranking]
 
-    quantityOfFeatures = 9
-    instances = loadDataFromFile(fileName)
-    ranking = kolmogorovTest(instances, quantityOfFeatures)
-    featuresIds = [x.getParamID() for x in ranking]
+    # teachingData, testData = divideInstances(instances)
 
     # for feature in range(0, ranking.__len__()):
         # print(ranking[feature].getParamID() + 1, '\t', ranking[feature].getPValue(), '\t', ranking[feature].getStatistic())
 
-    crossValidation(kNN, metricTypes, instances, ranking)
+    # crossValidation(kNN, metricTypes, instances, ranking)
 
     # score = kNNAlgorithm(1, teachingData, testData, featuresIds, 'euclidean')
     # print(score)
 
 
-def loadDataFromFile(fileName):
+def loadDataFromFile(fileName, defaultValueOfInvalidFeature = None):
+    instances = []
+
     file = open(fileName, 'r').read()
     lines = file.split('\n')
-    instances = []
-    for line in lines:
-        row = line.split(",")
 
-        if (row.__len__() == 11):
-            instance = Instance(row[0], row[1:10], row[10])
+    for line in lines:
+        if '?' in line and defaultValueOfInvalidFeature is None:
+            continue
+
+        row = line.split(',')
+
+        if row.__len__() == 11:
+            instance = Instance(row[columnId], row[columnFirstFeature:quantityOfFeatures + 1], row[columnCancerClass], defaultValueOfInvalidFeature)
             instances.append(instance)
 
     return instances
@@ -60,24 +81,24 @@ def kolmogorovTest(instances, quantityOfFeatures):
 
     return sorted(featuresRanking, key=ksType.getStatistic, reverse=True)
 
-# def crossValidation(instances):
-#     teachingData = []
-#     testData = []
-#     instancesNumber = int(instances.__len__() / 2)
-#     usedIndexes = []
+def divideInstances(instances):
+    teachingData = []
+    testData = []
+    instancesNumber = int(instances.__len__() / 2)
+    usedIndexes = []
 
-#     while teachingData.__len__() < instancesNumber:
-#         randomIndex = random.randint(0, instances.__len__() - 1)
+    while teachingData.__len__() < instancesNumber:
+        randomIndex = random.randint(0, instances.__len__() - 1)
 
-#         if randomIndex not in usedIndexes:
-#             teachingData.append(instances[randomIndex])
-#             usedIndexes.append(randomIndex)
+        if randomIndex not in usedIndexes:
+            teachingData.append(instances[randomIndex])
+            usedIndexes.append(randomIndex)
 
-#     for i in range(instances.__len__()):
-#         if i not in usedIndexes:
-#             testData.append(instances[i])
+    for i in range(instances.__len__()):
+        if i not in usedIndexes:
+            testData.append(instances[i])
 
-#     return teachingData, testData
+    return teachingData, testData
 
 def kNNAlgorithm(k, teachingData, testData, features, metric):
     teachingDataSet, teachingDataLabels = prepareData(teachingData, features)
