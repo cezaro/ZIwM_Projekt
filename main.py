@@ -1,33 +1,35 @@
 from scipy.stats import ks_2samp
-from ksType import ksType
-from instance import Instance
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_score, RepeatedKFold
 from numpy import mean
+
+from src.ksType import ksType
+from src.Instance import Instance
+
 import random
 
 
 # Configuration
-dataFile = 'Resources/breast-cancer-wisconsin.data'
+dataFile = 'resources/breast-cancer-wisconsin.data'
 
-skipRowsWithInvalidFeature = True # Skip rows with '?' in features
-defaultValueOfInvalidFeature = 1 # Replace '?' with value if skipRowsWithInvalidFeature is False
+skipRowsWithInvalidFeature = True   # Skip rows with '?' in features
+defaultValueOfInvalidFeature = 1    # Replace '?' with value if skipRowsWithInvalidFeature is False
 
 # Data settings
-columnId = 0 # Index of column with id
-columnCancerClass = 10 # Index of column with cancer class
-columnFirstFeature = 1 # Index of column with first feature
+columnId = 0            # Index of column with id
+columnCancerClass = 10  # Index of column with cancer class
+columnFirstFeature = 1  # Index of column with first feature
 
-quantityOfFeatures = 9
+quantityOfFeatures = 9  # Quantity of features in file
 
 # Algorithms settings
-kNN = [1, 5, 10]
-metricTypes = ['euclidean', 'manhattan']
+kNN = [1, 5, 10]                            # kNN settings
+metricTypes = ['euclidean', 'manhattan']    # Distance metrics
 
 
 def main():
-    instances = loadDataFromFile(dataFile, defaultValueOfInvalidFeature)
+    instances = loadDataFromFile(dataFile, skipRowsWithInvalidFeature, defaultValueOfInvalidFeature)
 
     print(instances[0].getFeatureValues())
     # ranking = kolmogorovTest(instances, quantityOfFeatures)
@@ -44,14 +46,14 @@ def main():
     # print(score)
 
 
-def loadDataFromFile(fileName, defaultValueOfInvalidFeature = None):
+def loadDataFromFile(fileName, skipRowsWithInvalidFeature = False, defaultValueOfInvalidFeature = 1):
     instances = []
 
     file = open(fileName, 'r').read()
     lines = file.split('\n')
 
     for line in lines:
-        if '?' in line and defaultValueOfInvalidFeature is None:
+        if '?' in line and skipRowsWithInvalidFeature is True:
             continue
 
         row = line.split(',')
@@ -146,7 +148,6 @@ def crossValidation(kValues, metrics, instances, features):
                 score = cross_val_score(estimator = knn, X = data , y = featuresData , scoring = 'accuracy', cv = rkf)
                 scores[m][k].append(mean(score))
 
-    print(scores)
     return scores
 
 
