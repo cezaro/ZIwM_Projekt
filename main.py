@@ -11,8 +11,8 @@ def main():
     fileName = 'Resources/breast-cancer-wisconsin.data'
     # fileName = 'Resources/wdbc.data'
 
-    # kNN = [1, 5, 10]
-    # metricType = ['manhattan', 'euclidean']
+    kNN = [1, 5, 10]
+    metricTypes = ['euclidean', 'manhattan']
 
     quantityOfFeatures = 9
     instances = loadDataFromFile(fileName)
@@ -22,7 +22,7 @@ def main():
     # for feature in range(0, ranking.__len__()):
         # print(ranking[feature].getParamID() + 1, '\t', ranking[feature].getPValue(), '\t', ranking[feature].getStatistic())
 
-    crossValidation(1, 5, 'euclidean', instances, ranking)
+    crossValidation(kNN, metricTypes, instances, ranking)
 
     # score = kNNAlgorithm(1, teachingData, testData, featuresIds, 'euclidean')
     # print(score)
@@ -107,18 +107,25 @@ def prepareData(data, features):
 
     return finalData, finalDataLabels
 
-def crossValidation(k, n, metric, instances, features):
-    scores = []
+def crossValidation(kValues, metrics, instances, features):
+    scores = {}
 
-    for i in range(0, features.__len__()):
-        featuresIds = [feature.getParamID() for feature in features[0:i + 1]]
-        data, featuresData = prepareData(instances, featuresIds)
+    for m in metrics:
+        scores[m] = {}
 
-        knn = KNeighborsClassifier(n_neighbors = k, metric = metric)
-        rkf = RepeatedKFold(n_splits = 2, n_repeats = n)
-        score = cross_val_score(estimator = knn, X = data , y = featuresData , scoring = 'accuracy', cv = rkf)
-        scores.append(mean(score))
+        for k in kValues:
+            scores[m][k] = []
 
+            for i in range(0, features.__len__()):
+                featuresIds = [feature.getParamID() for feature in features[0:i + 1]]
+                data, featuresData = prepareData(instances, featuresIds)
+
+                knn = KNeighborsClassifier(n_neighbors = k, metric = m)
+                rkf = RepeatedKFold(n_splits = 2, n_repeats = 5)
+                score = cross_val_score(estimator = knn, X = data , y = featuresData , scoring = 'accuracy', cv = rkf)
+                scores[m][k].append(mean(score))
+
+    print(scores)
     return scores
 
 

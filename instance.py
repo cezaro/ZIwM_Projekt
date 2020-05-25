@@ -23,7 +23,7 @@ class Instance:
     def getFeature(self, feature):
         value = self.getFeatureValues()[feature]
 
-        return value if value != '?' else 0
+        return value if value != '?' else 1
 
     def getCancerType(self):
         return self.cancerType
