@@ -1,6 +1,6 @@
 from scipy.stats import ks_2samp
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.model_selection import cross_val_score, RepeatedKFold, train_test_split
 from numpy import mean
 
@@ -39,11 +39,11 @@ def main():
         # print(ranking[feature].getParamID() + 1, '\t', ranking[feature].getPValue(), '\t', ranking[feature].getStatistic())
 
     teachingData, testData = splitInstances(instances, rankingIds)
+    score, matrix = kNNAlgorithm(5, teachingData, testData, rankingIds, 'euclidean')
+    print(matrix)
 
     # scores = crossValidation(kNN, metricTypes, instances, ranking)
-
-    # score = kNNAlgorithm(1, teachingData, testData, featuresIds, 'euclidean')
-    # print(score)
+    # print(scores)
 
 
 def loadDataFromFile(fileName, skipRowsWithInvalidFeature = False, defaultValueOfInvalidFeature = 1):
@@ -109,9 +109,10 @@ def kNNAlgorithm(k, teachingData, testData, features, metric):
     classifier.fit(teachingDataSet, teachingDataLabels)
 
     predictions = classifier.predict(testDataSet)
-    score = eval('accuracy_score')(testDataLabels, predictions)
+    score = accuracy_score(testDataLabels, predictions)
+    matrix = confusion_matrix(testDataLabels, predictions, labels = ['B', 'M'])
 
-    return score
+    return score, matrix
 
 def crossValidation(kValues, metrics, instances, features):
     scores = {}
