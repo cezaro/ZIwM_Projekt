@@ -1,7 +1,7 @@
 from scipy.stats import ks_2samp
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
-from sklearn.model_selection import cross_val_score, RepeatedKFold
+from sklearn.model_selection import cross_val_score, RepeatedKFold, train_test_split
 from numpy import mean
 
 from src.ksType import ksType
@@ -31,14 +31,16 @@ metricTypes = ['euclidean', 'manhattan']    # Distance metrics
 def main():
     instances = loadDataFromFile(dataFile, skipRowsWithInvalidFeature = False, defaultValueOfInvalidFeature = 1)
     ranking = kolmogorovTest(instances, quantityOfFeatures)
-    # featuresIds = [x.getParamID() for x in ranking]
+    rankingIds = [x.getParamID() for x in ranking]
 
     # teachingData, testData = divideInstances(instances)
 
     # for feature in range(0, ranking.__len__()):
         # print(ranking[feature].getParamID() + 1, '\t', ranking[feature].getPValue(), '\t', ranking[feature].getStatistic())
 
-    crossValidation(kNN, metricTypes, instances, ranking)
+    teachingData, testData = splitInstances(instances, rankingIds)
+
+    # scores = crossValidation(kNN, metricTypes, instances, ranking)
 
     # score = kNNAlgorithm(1, teachingData, testData, featuresIds, 'euclidean')
     # print(score)
@@ -81,38 +83,6 @@ def kolmogorovTest(instances, quantityOfFeatures):
 
     return sorted(featuresRanking, key=ksType.getStatistic, reverse=True)
 
-def divideInstances(instances):
-    teachingData = []
-    testData = []
-    instancesNumber = int(instances.__len__() / 2)
-    usedIndexes = []
-
-    while teachingData.__len__() < instancesNumber:
-        randomIndex = random.randint(0, instances.__len__() - 1)
-
-        if randomIndex not in usedIndexes:
-            teachingData.append(instances[randomIndex])
-            usedIndexes.append(randomIndex)
-
-    for i in range(instances.__len__()):
-        if i not in usedIndexes:
-            testData.append(instances[i])
-
-    return teachingData, testData
-
-def kNNAlgorithm(k, teachingData, testData, features, metric):
-    teachingDataSet, teachingDataLabels = prepareData(teachingData, features)
-    testDataSet, testDataLabels = prepareData(testData, features)
-
-    classifier = KNeighborsClassifier(n_neighbors=k, metric=metric)
-    classifier.fit(teachingDataSet, teachingDataLabels)
-
-    predictions = classifier.predict(testDataSet)
-    score = eval('accuracy_score')(testDataLabels, predictions)
-
-    return score
-
-
 def prepareData(data, features):
     finalData = []
     finalDataLabels = []
@@ -127,6 +97,21 @@ def prepareData(data, features):
         finalData.append(featureSet)
 
     return finalData, finalDataLabels
+
+def splitInstances(instances, features):
+    return train_test_split(instances, test_size = 0.5)
+
+def kNNAlgorithm(k, teachingData, testData, features, metric):
+    teachingDataSet, teachingDataLabels = prepareData(teachingData, features)
+    testDataSet, testDataLabels = prepareData(testData, features)
+
+    classifier = KNeighborsClassifier(n_neighbors = k, metric = metric)
+    classifier.fit(teachingDataSet, teachingDataLabels)
+
+    predictions = classifier.predict(testDataSet)
+    score = eval('accuracy_score')(testDataLabels, predictions)
+
+    return score
 
 def crossValidation(kValues, metrics, instances, features):
     scores = {}
@@ -144,9 +129,8 @@ def crossValidation(kValues, metrics, instances, features):
                 knnClassifier = KNeighborsClassifier(n_neighbors = k, metric = m)
                 rkf = RepeatedKFold(n_splits = 2, n_repeats = 5)
                 score = cross_val_score(estimator = knnClassifier, X = data, y = dataLabels, scoring = 'accuracy', cv = rkf)
-                scores[m][k].append(mean(score))
+                scores[m][k].append(round(mean(score) * 100, 2))
 
     return scores
-
 
 main()
